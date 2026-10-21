@@ -85,8 +85,7 @@ bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
     bot.sendMessage(chatId, "أهلاً بك في بوت Volt Mining الرسمي! ⚡\nاضغط على الزر أدناه لبدء التعدين:", {
         reply_markup: {
             inline_keyboard: [[
-                { text: "⚡ ابدأ التعدين الآن", web_app: { url: "https://rignite.netlify.app" } }
-            ]]
+                { text: "⚡ ابدأ التعدين الآن", web_app: { url: "https://transcendent-beijinho-322c51.netlify.app" } }]]
         }
     });
 });
