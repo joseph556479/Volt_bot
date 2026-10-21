@@ -1,100 +1,97 @@
-require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const { createClient } = require('@supabase/supabase-js');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
-// إعداد السيرفر
+// التوكن وإعدادات Supabase
+const BOT_TOKEN = '7629604169:AAGD_gXlZl2Ols9lWv9Nrm7K3s62T3eE8yA'; 
+const SUPABASE_URL = 'https://biennfghsvreatzmldpt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_XtKpUAA1b1_QJEt_LfvJ_Q_7xvSmdeS'; 
+
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const token = process.env.BOT_TOKEN;
+const COMMUNITY_CHAT_ID = '@Volt_mining_community';
 
-if (!token || !supabaseUrl || !supabaseKey) {
-  console.error("خطأ: يرجى التأكد من ضبط متغيرات البيئة في ملف .env أو إعدادات الاستضافة");
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-const bot = new TelegramBot(token, { polling: true });
-
-// رابط لعبتك المنشور على Netlify
-const webAppUrl = 'https://transcendent-beijinho-322c51.netlify.app';
-
-console.log('⚡ تم تشغيل البوت والسيرفر بنجاح...');
-
-// --- 1. كود البوت ---
-bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  const telegramId = msg.from.id;
-  const username = msg.from.username || msg.from.first_name;
-
-  try {
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegramId)
-      .maybeSingle();
-
-    if (!existingUser) {
-      // تم تصحيح القوس هنا بنجاح
-      await supabase.from('users').insert([
-        {
-          telegram_id: telegramId,
-          username: username,
-          coins: 500, // مطابق للرصيد الافتتاحي في اللعبة
-          ads_watched: 0
-        },
-      ]);
-      console.log(`تم تسجيل لاعب جديد: ${username}`);
+// API للتحقق من انضمام المستخدم للقناة الرسمية
+app.get('/verify-membership', async (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) {
+        return res.status(400).json({ isMember: false, error: 'User ID required' });
     }
 
-    const options = {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '⚡ ابدأ التعدين الآن', web_app: { url: webAppUrl } }]
-        ]
-      }
-    };
-
-    bot.sendMessage(chatId, `أهلاً بك يا ${msg.from.first_name} ⚡\n\nاضغط على الزر بالأسفل لفتح اللعبة.`, options);
-  } catch (error) {
-    console.error('يوجد خطأ:', error.message);
-    bot.sendMessage(chatId, 'حدث خطأ مؤقت.');
-  }
-});
-
-// --- 2. جسر التواصل (API) للعبة ---
-app.post('/api/getUser', async (req, res) => {
-  const { telegram_id } = req.body;
-
-  try {
-    const { data: user } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegram_id)
-      .maybeSingle();
-
-    if (user) {
-      res.json({ success: true, user: user });
-    } else {
-      res.json({ success: false, message: 'المستخدم غير موجود' });
+    try {
+        const chatMember = await bot.getChatMember(COMMUNITY_CHAT_ID, userId);
+        const validStatuses = ['creator', 'administrator', 'member'];
+        if (validStatuses.includes(chatMember.status)) {
+            return res.json({ isMember: true });
+        } else {
+            return res.json({ isMember: false });
+        }
+    } catch (error) {
+        console.error("خطأ أثناء التحقق من العضوية:", error);
+        return res.json({ isMember: false });
     }
-  } catch (error) {
-    res.json({ success: false, message: 'حدث خطأ في قاعدة البيانات' });
-  }
 });
 
-app.get('/', (req, res) => {
-  res.send('Rignite Bot Server is Running!');
+// معالج أمر /start والتحقق من الإحالة مع منح 10,000 عملة للداعي
+bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    const startParam = match[1];
+
+    try {
+        if (startParam && startParam.startsWith('ref_')) {
+            const referrerId = parseInt(startParam.replace('ref_', ''));
+            
+            if (referrerId && referrerId !== userId) {
+                const { data: existingUser } = await supabase
+                    .from('users')
+                    .select('telegram_id')
+                    .eq('telegram_id', userId)
+                    .maybeSingle();
+
+                if (!existingUser) {
+                    const { data: referrer } = await supabase
+                        .from('users')
+                        .select('coins')
+                        .eq('telegram_id', referrerId)
+                        .maybeSingle();
+
+                    if (referrer) {
+                        const newCoins = (parseFloat(referrer.coins) || 0) + 10000;
+                        await supabase
+                            .from('users')
+                            .update({ coins: newCoins })
+                            .eq('telegram_id', referrerId);
+
+                        await supabase
+                            .from('referrals')
+                            .insert([{ referrer_id: referrerId, referred_id: userId, reward: 10000 }]);
+
+                        bot.sendMessage(referrerId, `🎉 انضم صديق جديد عبر رابط الإحالة الخاص بك!\nحصلت على مكافأة قدرها 10,000 عملة 🪙.`);
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error("خطأ في معالجة الإحالة:", e);
+    }
+
+    bot.sendMessage(chatId, "أهلاً بك في بوت Volt Mining الرسمي! ⚡\nاضغط على الزر أدناه لبدء التعدين:", {
+        reply_markup: {
+            inline_keyboard: [[
+                { text: "⚡ ابدأ التعدين الآن", web_app: { url: "https://rignite.netlify.app" } }
+            ]]
+        }
+    });
 });
 
-// تشغيل السيرفر على البورت المعين من الاستضافة أو 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🌐 السيرفر يعمل على المنفذ ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

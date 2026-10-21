@@ -498,7 +498,7 @@
         </div>
         <div class="coin-box">
             <div class="coin-title">إجمالي التعدين</div>
-            <div class="coin-value" id="coinsDisplay">10,000,000</div>
+            <div class="coin-value" id="coinsDisplay">500</div>
         </div>
     </div>
     <div class="pages-wrapper">
@@ -601,14 +601,20 @@
                         <i class="fa-brands fa-telegram"></i>
                     </div>
                     <div class="device-info">
-                        <div class="device-name">انضم لقناة التليجرام الرسمية</div>
+                        <div class="device-name">انضم لمجتمع التليجرام الرسمي</div>
                         <div class="device-stats">
                             <span style="color: #fbbd08;">+3,000 عملة 🪙 (تتجدد يومياً)</span>
+                            <span id="tgTaskTimerDisplay" style="font-size: 10px; color: #ef4444; font-weight: bold;"></span>
                         </div>
                     </div>
-                    <button class="buy-btn" id="btn_default_tg" onclick="verifyAndCompleteDefaultTask()" style="background: linear-gradient(180deg, #0088cc 0%, #005588 100%); color: white;">
-                        تحقق وتنفيذ
-                    </button>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <button class="buy-btn" id="btn_open_default_tg" onclick="openDefaultTgLink()" style="background: linear-gradient(180deg, #0088cc 0%, #005588 100%); color: white; padding: 5px 8px;">
+                            انضمام 🔗
+                        </button>
+                        <button class="buy-btn" id="btn_default_tg" onclick="verifyAndCompleteDefaultTask()" style="background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; padding: 5px 8px;">
+                            تحقق ✓
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -618,8 +624,8 @@
             </div>
             <div class="exchange-hero-card" style="padding: 15px;">
                 <div class="exchange-hero-title">اكسب مع أصدقائك</div>
-                <div class="exchange-hero-price" style="font-size: 20px; color: #fbbd08; margin-bottom: 4px;">+2,500 عملة لكل صديق</div>
-                <div class="exchange-hero-desc">شارك رابط الإحالة الخاص بك مع أصدقائك، واحصل على مكافأة فورية بالإضافة إلى نسبة من أرباحهم!</div>
+                <div class="exchange-hero-price" style="font-size: 20px; color: #fbbd08; margin-bottom: 4px;">+10,000 عملة لكل صديق</div>
+                <div class="exchange-hero-desc">شارك رابط الإحالة الخاص بك مع أصدقائك، واحصل على مكافأة فورية قدرها 10,000 عملة مجاناً!</div>
             </div>
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="refLinkInput" readonly value="https://t.me/Volt_Mining_bot?start=ref" style="flex: 1; background: #151a2f; border: 1px solid #283366; border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; outline: none;" />
@@ -692,7 +698,8 @@
                     <div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد أي طلبات سحب سابقة</div>
                 </div>
             </div>
-            <div id="adminPanelSection" style="background: #111625; border: 1px solid #3a477a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- لوحة الأدمن مخفية للأدمن فقط -->
+            <div id="adminPanelSection" style="background: #111625; border: 1px solid #3a477a; border-radius: 14px; padding: 14px; display: none; flex-direction: column; gap: 8px;">
                 <div style="font-weight: bold; font-size: 13px; color: #fbbd08; display: flex; align-items: center; gap: 6px;">
                     <i class="fa-solid fa-shield-halved"></i> لوحة تحكم الأدمن (إدارة الطلبات)
                 </div>
@@ -744,8 +751,7 @@
         const SUPABASE_URL = 'https://biennfghsvreatzmldpt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_XtKpUAA1b1_QJEt_LfvJ_Q_7xvSmdeS'; 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // معرف ثابت للمتصفح لمنع تصفير البيانات عند الـ Refresh
+        
         let currentTelegramId = localStorage.getItem('rignite_browser_uid');
         if (!currentTelegramId) {
             currentTelegramId = Math.floor(100000000 + Math.random() * 900000000);
@@ -753,6 +759,9 @@
         } else {
             currentTelegramId = parseInt(currentTelegramId);
         }
+
+        const ADMIN_ID = 5773666424;
+        let lastDefaultTaskCompletion = 0;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let ambientNode = null;
@@ -776,7 +785,7 @@
         window.addEventListener('click', () => {
             startAmbientSound();
         }, { once: true });
-
+        
         function playSound(type) {
             try {
                 if (!audioCtx) return;
@@ -805,32 +814,28 @@
                 }
             } catch(e) {}
         }
-
+        
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "51322" }) : null;
-        let coins = 10000000; 
+        let coins = 500; 
         let defaultBaseMining = 5; 
         let baseMiningRate = 5;         
-
         let maxEnergy = 500;
         let currentEnergy = 500;
         let energyUpgradeLevel = 0;
         let baseEnergyPrice = 400;
         let energyCostPerClick = 10;
         let energyRegenRate = 5;        
-
         let maxBatteryCapacity = 5000;  
         let currentBatteryCharge = 5000;
         let batteryUpgradeLevel = 0;    
         let baseBatteryPrice = 600;     
-
         let currentHourMinedCoins = 0;
         let currentHourAdsWatched = 0;
         let plusClickCount = 0;
         let minusClickCount = 0;
         let systemState = 'normal';
         let fanRotation = 0;
-
-        // مصفوفة الأجهزة المعدلة منطقياً باقتصاد متدرج
+        
         let devices = [
             { id: 'dev_pi', name: 'شريحة Raspberry Pi', basePrice: 150, baseInc: 12, powerDraw: 0.05, level: 0, maxLevel: 50, icon: 'fa-microchip' },
             { id: 'dev_cpu', name: 'معالج CPU متطور', basePrice: 1200, baseInc: 95, powerDraw: 0.15, level: 0, maxLevel: 50, icon: 'fa-memory' },
@@ -841,7 +846,7 @@
             { id: 'dev_quantum', name: 'كمبيوتر كوانتم الكوانتي', basePrice: 35000000, baseInc: 3100000, powerDraw: 22.0, level: 0, maxLevel: 50, icon: 'fa-atom' },
             { id: 'dev_satellite', name: 'قمر صناعي مداري فضائي', basePrice: 280000000, baseInc: 25000000, powerDraw: 50.0, level: 0, maxLevel: 50, icon: 'fa-satellite-dish' }
         ];
-
+        
         const coinsDisplay = document.getElementById('coinsDisplay');
         const rateText = document.getElementById('rateText');
         const energyBar = document.getElementById('energyBar');
@@ -861,12 +866,10 @@
         const tokenPriceDisplay = document.getElementById('tokenPriceDisplay');
         const hourlyMinedDisplay = document.getElementById('hourlyMinedDisplay');
         const hourlyAdsDisplay = document.getElementById('hourlyAdsDisplay');
-
-        // معادلة حساب الزيادة والإنتاج للأجهزة بالنمو المتصاعد
+        
         function getDeviceNextInc(dev) {
             return Math.floor(dev.baseInc * Math.pow(1.08, dev.level));
         }
-
         function calculateTotalDeviceMiningRate() {
             let total = defaultBaseMining;
             devices.forEach(dev => {
@@ -876,27 +879,23 @@
             });
             return total;
         }
-
         function getDevicePrice(dev) { 
             return Math.floor(dev.basePrice * Math.pow(1.15, dev.level)); 
         }
-
         function getBatteryUpgradePrice() { 
             return Math.floor(baseBatteryPrice * Math.pow(1.22, batteryUpgradeLevel)); 
         }
-
         function getEnergyUpgradePrice() { 
             return Math.floor(baseEnergyPrice * Math.pow(1.18, energyUpgradeLevel)); 
         }
-
         function copyRefLink() {
             const input = document.getElementById('refLinkInput');
             input.select();
-            input.setSelectionRange(0, 99999);
+            input.setSelectionRange(0, 9999);
             navigator.clipboard.writeText(input.value);
             alert("تم نسخ رابط الإحالة بنجاح!");
         }
-
+        
         async function loadUserDataFromCloud() {
             try {
                 let { data, error } = await supabaseClient
@@ -904,7 +903,6 @@
                     .select('*')
                     .eq('telegram_id', currentTelegramId)
                     .maybeSingle();
-
                 if (data) {
                     coins = parseFloat(data.coins);
                     currentEnergy = parseFloat(data.current_energy);
@@ -914,6 +912,7 @@
                     maxBatteryCapacity = parseFloat(data.max_battery);
                     batteryUpgradeLevel = data.battery_upgrade_level || 0;
                     currentHourAdsWatched = data.ads_watched || 0;
+                    lastDefaultTaskCompletion = data.last_default_task || 0;
                 } else {
                     await supabaseClient.from('users').insert([{
                         telegram_id: currentTelegramId,
@@ -922,12 +921,25 @@
                         current_energy: currentEnergy,
                         max_energy: maxEnergy,
                         current_battery: currentBatteryCharge,
-                        max_battery: maxBatteryCapacity
+                        max_battery: maxBatteryCapacity,
+                        last_default_task: 0
                     }]);
                 }
+                
+                const adminSection = document.getElementById('adminPanelSection');
+                if (adminSection) {
+                    if (parseInt(currentTelegramId) === ADMIN_ID) {
+                        adminSection.style.display = 'flex';
+                    } else {
+                        adminSection.style.display = 'none';
+                    }
+                }
+
                 await loadUserDevicesFromCloud();
                 await loadWithdrawalRequestsFromCloud();
                 renderCustomTasks();
+                checkDefaultTaskStatus();
+                loadFriendsDataFromCloud();
                 updateUI();
                 updateExchangeUI();
             } catch (e) {
@@ -948,17 +960,17 @@
                     current_battery: currentBatteryCharge,
                     max_battery: maxBatteryCapacity,
                     battery_upgrade_level: batteryUpgradeLevel,
-                    ads_watched: currentHourAdsWatched
+                    ads_watched: currentHourAdsWatched,
+                    last_default_task: lastDefaultTaskCompletion
                 });
             } catch (e) {}
         }
-
+        
         async function loadUserDevicesFromCloud() {
             let { data } = await supabaseClient
                 .from('user_devices')
                 .select('*')
                 .eq('telegram_id', currentTelegramId);
-
             if (data && data.length > 0) {
                 data.forEach(dbDev => {
                     let localDev = devices.find(d => d.id === dbDev.device_id);
@@ -968,7 +980,7 @@
             baseMiningRate = calculateTotalDeviceMiningRate();
             renderMarket();
         }
-
+        
         async function saveDeviceLevelToCloud(deviceId, level) {
             await supabaseClient.from('user_devices').upsert({
                 telegram_id: currentTelegramId,
@@ -977,9 +989,64 @@
             }, { onConflict: 'telegram_id,device_id' });
         }
 
+        // --- جلب وعرض بيانات الإحالات والأصدقاء المدعوين ---
+        async function loadFriendsDataFromCloud() {
+            try {
+                const refInput = document.getElementById('refLinkInput');
+                if (refInput && currentTelegramId) {
+                    refInput.value = `https://t.me/Volt_Mining_bot?start=ref_${currentTelegramId}`;
+                }
+
+                let { data: refs } = await supabaseClient
+                    .from('referrals')
+                    .select('*')
+                    .eq('referrer_id', currentTelegramId);
+
+                const countElem = document.getElementById('friendsCount');
+                const earningsElem = document.getElementById('refEarnings');
+                const listContainer = document.getElementById('friends-list-container');
+
+                if (refs && refs.length > 0) {
+                    if (countElem) countElem.innerText = refs.length;
+                    let totalEarned = refs.reduce((sum, r) => sum + (parseFloat(r.reward) || 0), 0);
+                    if (earningsElem) earningsElem.innerText = totalEarned.toLocaleString() + " 🪙";
+
+                    if (listContainer) {
+                        listContainer.innerHTML = '';
+                        refs.forEach(r => {
+                            let card = document.createElement('div');
+                            card.className = 'device-card';
+                            card.style.marginBottom = '0';
+                            card.innerHTML = `
+                                <div class="device-icon-box" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981;">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </div>
+                                <div class="device-info">
+                                    <div class="device-name">صديق مُنضم (ID: ${r.referred_id})</div>
+                                    <div class="device-stats" style="color: #10b981;">+10,000 عملة مكافأة</div>
+                                </div>
+                            `;
+                            listContainer.appendChild(card);
+                        });
+                    }
+                } else {
+                    if (countElem) countElem.innerText = "0";
+                    if (earningsElem) earningsElem.innerText = "0 🪙";
+                    if (listContainer) {
+                        listContainer.innerHTML = `
+                            <div class="device-card" style="margin-bottom: 0; justify-content: center; color: #8c93b7; font-size: 12px; padding: 15px;">
+                                لم تقم بدعوة أي صديق حتى الآن. ابدأ بمشاركة الرابط!
+                            </div>`;
+                    }
+                }
+            } catch(e) {
+                console.error("خطأ في جلب بيانات الإحالات:", e);
+            }
+        }
+        
         async function resetGameData() {
             if (confirm("هل أنت متأكد حقاً من تصفير جميع بياناتك والبدء من جديد من المستوى 1؟")) {
-                coins = 0;
+                coins = 500;
                 baseMiningRate = defaultBaseMining;
                 maxEnergy = 500;
                 currentEnergy = 500;
@@ -988,27 +1055,25 @@
                 currentBatteryCharge = 5000;
                 batteryUpgradeLevel = 0;
                 currentHourAdsWatched = 0;
+                lastDefaultTaskCompletion = 0;
                 devices.forEach(d => d.level = 0);
-
                 await saveUserDataToCloud();
                 for(let dev of devices) {
                     await saveDeviceLevelToCloud(dev.id, 0);
                 }
-
                 updateUI();
                 renderMarket();
                 loadWithdrawalRequestsFromCloud();
                 alert("تم إعادة ضبط الحساب بنجاح وإرجاع كافة مستويات الأجهزة ومعدل التعدين إلى الأساسي!");
             }
         }
-
+        
         function checkWithdrawalEligibility() {
             const section = document.getElementById('withdrawalSection');
             const lockBadge = document.getElementById('withdrawLockBadge');
             const withdrawDesc = document.getElementById('withdrawDesc');
             const withdrawBtn = document.getElementById('withdrawBtn');
             const formElements = document.querySelectorAll('.withdraw-form-element');
-
             if (coins >= 1000000) {
                 section.style.opacity = '1';
                 section.style.pointerEvents = 'auto';
@@ -1027,36 +1092,30 @@
                 formElements.forEach(el => el.style.opacity = '0.5');
             }
         }
-
+        
         async function submitWithdrawal() {
             const method = document.getElementById('withdrawMethod').value;
             const amountInput = document.getElementById('withdrawAmount').value;
             const amount = parseInt(amountInput);
             const address = document.getElementById('withdrawAddress').value.trim();
-
             if (!amount || amount < 1000000) {
                 alert("الحد الأدنى لطلب السحب هو 1,000,000 عملة!");
                 return;
             }
-
             if (!address) {
                 alert("الرجاء إدخال عنوان أو معرف السحب بشكل صحيح!");
                 return;
             }
-
             if (coins < amount) {
                 alert("رصيدك الحالي لا يكفي لهذا المبلغ المراد سحبه!");
                 return;
             }
-
             let coinPriceUSD = coins > 0 ? (currentHourAdsWatched * 0.0003 * 0.30) / coins : 0;
             let pricePerMillion = coinPriceUSD * 1000000;
             let usdEquivalent = ((amount / 1000000) * (pricePerMillion > 0 ? pricePerMillion : 0.05)).toFixed(4);
-
             coins -= amount;
             updateUI();
             saveUserDataToCloud();
-
             await supabaseClient.from('withdrawal_requests').insert([{
                 telegram_id: currentTelegramId,
                 method,
@@ -1065,34 +1124,30 @@
                 usd_val: usdEquivalent,
                 status: 'pending'
             }]);
-
             document.getElementById('withdrawAddress').value = '';
             document.getElementById('withdrawAmount').value = '';
             loadWithdrawalRequestsFromCloud();
             alert("تم إرسال طلب السحب بنجاح وحالته الآن (Pending)!");
         }
-
+        
         async function loadWithdrawalRequestsFromCloud() {
             let { data } = await supabaseClient
                 .from('withdrawal_requests')
                 .select('*')
                 .order('created_at', { ascending: true });
-
             if (data) {
                 renderUserWithdrawalHistory(data);
                 renderAdminRequests(data);
             }
         }
-
+        
         function renderUserWithdrawalHistory(requests) {
             const historyContainer = document.getElementById('userRequestsHistoryList');
             let userReqs = requests.filter(r => r.telegram_id === currentTelegramId);
-
             if (userReqs.length === 0) {
                 historyContainer.innerHTML = `<div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد أي طلبات سحب سابقة</div>`;
                 return;
             }
-
             historyContainer.innerHTML = '';
             [...userReqs].reverse().forEach(req => {
                 let isCompleted = req.status === 'completed';
@@ -1113,14 +1168,13 @@
                 historyContainer.appendChild(item);
             });
         }
-
+        
         function renderAdminRequests(requests) {
             const listContainer = document.getElementById('adminRequestsList');
             if (!requests || requests.length === 0) {
                 listContainer.innerHTML = `<div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد طلبات سحب حالياً</div>`;
                 return;
             }
-
             listContainer.innerHTML = '';
             [...requests].reverse().forEach((req) => {
                 let isCompleted = req.status === 'completed';
@@ -1148,46 +1202,41 @@
                 listContainer.appendChild(item);
             });
         }
-
+        
         function copyAddressText(text) {
             navigator.clipboard.writeText(text);
             alert("تم نسخ العنوان إلى الحافظة بنجاح!");
         }
-
+        
         async function toggleRequestStatus(reqId, checkbox) {
             let newStatus = checkbox.checked ? 'completed' : 'pending';
             await supabaseClient.from('withdrawal_requests').update({ status: newStatus }).eq('id', reqId);
             loadWithdrawalRequestsFromCloud();
         }
-
+        
         function openAddTaskModal() {
             document.getElementById('addTaskModalOverlay').style.display = 'flex';
         }
-
         function closeAddTaskModal() {
             document.getElementById('addTaskModalOverlay').style.display = 'none';
         }
-
+        
         async function saveNewTask() {
             const title = document.getElementById('newTaskTitle').value.trim();
             const platform = document.getElementById('newTaskPlatform').value;
             const url = document.getElementById('newTaskUrl').value.trim();
             const cost = parseInt(document.getElementById('newTaskCost').value) || 1000;
             const maxPeople = parseInt(document.getElementById('newTaskMaxPeople').value) || 5;
-
             if (!title || !url) {
                 alert("الرجاء إدخال عنوان المهمة والرابط بشكل صحيح!");
                 return;
             }
-
             if (coins < cost) {
                 alert("رصيدك الحالي غير كافٍ لإنشاء وتكلفة هذه المهمة!");
                 return;
             }
-
             coins -= cost;
             saveUserDataToCloud();
-
             await supabaseClient.from('custom_tasks').insert([{
                 creator_id: currentTelegramId,
                 title,
@@ -1198,7 +1247,6 @@
                 current_completions: 0,
                 reward_per_user: Math.floor(cost / maxPeople)
             }]);
-
             closeAddTaskModal();
             renderCustomTasks();
             updateUI();
@@ -1207,24 +1255,20 @@
             document.getElementById('newTaskUrl').value = '';
             alert("تم نشر المهمة بنجاح وخصم التكلفة من رصيدك!");
         }
-
+        
         async function renderCustomTasks() {
             const container = document.getElementById('tasks-container');
             let defaultTaskHtml = container.children[0] ? container.children[0].outerHTML : '';
             container.innerHTML = defaultTaskHtml;
-
             let { data: customTasks } = await supabaseClient.from('custom_tasks').select('*');
             if (!customTasks) return;
-
             customTasks.forEach(task => {
                 if (task.current_completions >= task.max_people) return;
-
                 let iconClass = "fa-brands fa-telegram";
                 let iconColor = "#0088cc";
                 if(task.platform === 'youtube') { iconClass = "fa-brands fa-youtube"; iconColor = "#ff0000"; }
                 else if(task.platform === 'twitter') { iconClass = "fa-brands fa-x-twitter"; iconColor = "#ffffff"; }
                 else if(task.platform === 'other') { iconClass = "fa-solid fa-globe"; iconColor = "#10b981"; }
-
                 let card = document.createElement('div');
                 card.className = 'device-card';
                 card.style.marginBottom = '0';
@@ -1246,29 +1290,74 @@
                 container.appendChild(card);
             });
         }
-
+        
         async function executeCustomTask(taskId, reward, url) {
             window.open(url, '_blank');
             coins += reward;
             saveUserDataToCloud();
-
             let { data: task } = await supabaseClient.from('custom_tasks').select('current_completions').eq('id', taskId).single();
             if (task) {
                 await supabaseClient.from('custom_tasks').update({ current_completions: task.current_completions + 1 }).eq('id', taskId);
             }
-
             renderCustomTasks();
             updateUI();
             alert(`مبروك! حصلت على ${reward.toLocaleString()} عملة.`);
         }
-
-        function verifyAndCompleteDefaultTask() {
-            coins += 3000;
-            saveUserDataToCloud();
-            updateUI();
-            alert("مبروك! تم التحقق من انضمامك وحصلت على 3,000 عملة.");
+        
+        function openDefaultTgLink() {
+            window.open('https://t.me/Volt_mining_community', '_blank');
         }
 
+        function checkDefaultTaskStatus() {
+            const btnVerify = document.getElementById('btn_default_tg');
+            const timerDisplay = document.getElementById('tgTaskTimerDisplay');
+            const now = Date.now();
+            const elapsed = now - lastDefaultTaskCompletion;
+            const cooldown = 24 * 60 * 60 * 1000;
+
+            if (elapsed < cooldown) {
+                btnVerify.disabled = true;
+                btnVerify.style.opacity = '0.5';
+                const remaining = cooldown - elapsed;
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+                timerDisplay.innerText = `متاحة بعد: ${hours}h ${mins}m ${secs}s`;
+            } else {
+                btnVerify.disabled = false;
+                btnVerify.style.opacity = '1';
+                timerDisplay.innerText = '';
+            }
+        }
+
+        setInterval(checkDefaultTaskStatus, 1000);
+
+        async function verifyAndCompleteDefaultTask() {
+            const btnVerify = document.getElementById('btn_default_tg');
+            btnVerify.disabled = true;
+            btnVerify.innerText = 'جاري التحقق...';
+
+            try {
+                const response = await fetch(`https://volt-bot-mkp7.onrender.com/verify-membership?userId=${currentTelegramId}`);
+                const data = await response.json();
+
+                if (data.isMember) {
+                    coins += 3000;
+                    lastDefaultTaskCompletion = Date.now();
+                    saveUserDataToCloud();
+                    updateUI();
+                    alert("مبروك! تم التحقق من انضمامك لمجتمع الفولت بنجاح، وحصلت على 3,000 عملة 🪙!");
+                } else {
+                    alert("عذراً! يبدو أنك لم تنضم بعد إلى مجتمع الفولت. اضغط على زر (انضمام 🔗) أولاً ثم أعد المحاولة.");
+                }
+            } catch (e) {
+                alert("تعذر الاتصال بسيرفر التحقق حالياً، يرجى التأكد من انضمامك والمحاولة لاحقاً.");
+            } finally {
+                btnVerify.innerText = 'تحقق ✓';
+                checkDefaultTaskStatus();
+            }
+        }
+        
         function rewardEnergyAd() {
             if (AdController) {
                 AdController.show().then((result) => {
@@ -1278,13 +1367,13 @@
                     updateExchangeUI();
                     saveUserDataToCloud();
                 }).catch((result) => {
-                    triggerAdFallback('energy');
+                    alert("الإعلانات غير متوفرة حالياً.");
                 });
             } else {
-                triggerAdFallback('energy');
+                alert("الإعلانات متاحة فقط داخل تطبيق تيليجرام عبر منصة Adsgram.");
             }
         }
-
+        
         function rewardBatteryAd() {
             if (AdController) {
                 AdController.show().then((result) => {
@@ -1295,33 +1384,16 @@
                     updateExchangeUI();
                     saveUserDataToCloud();
                 }).catch((result) => {
-                    triggerAdFallback('battery');
+                    alert("الإعلانات غير متوفرة حالياً.");
                 });
             } else {
-                triggerAdFallback('battery');
+                alert("الإعلانات متاحة فقط داخل تطبيق تيليجرام عبر منصة Adsgram.");
             }
         }
-
-        function triggerAdFallback(type) {
-            if(confirm("وضع التجربة (متصفح): هل تريد محاكاة مشاهدة الإعلان للحصول على المكافأة؟")) {
-                if(type === 'energy') {
-                    currentEnergy = maxEnergy;
-                } else {
-                    let rewardAmount = maxBatteryCapacity * 0.20;
-                    currentBatteryCharge = Math.min(currentBatteryCharge + rewardAmount, maxBatteryCapacity);
-                }
-                currentHourAdsWatched++;
-                updateUI();
-                updateExchangeUI();
-                saveUserDataToCloud();
-                alert("تم منح المكافأة بنجاح!");
-            }
-        }
-
+        
         function updateExchangeUI() {
             hourlyMinedDisplay.innerText = Math.floor(coins).toLocaleString(); 
             hourlyAdsDisplay.innerText = currentHourAdsWatched.toLocaleString();
-
             let coinPriceUSD = 0;
             if (coins > 0) {
                 coinPriceUSD = (currentHourAdsWatched * 0.0003 * 0.30) / coins;
@@ -1329,15 +1401,13 @@
             let pricePerMillion = coinPriceUSD * 1000000;
             tokenPriceDisplay.innerText = "$" + pricePerMillion.toFixed(6);
         }
-
+        
         function switchPage(pageId, btn) {
             playSound('nav');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             if (pageId === 'page-exchange') {
                 updateExchangeUI();
             } else if (pageId === 'page-market') {
@@ -1347,12 +1417,13 @@
                 document.getElementById('profileMiningRate').innerText = calculateTotalDeviceMiningRate().toLocaleString() + "/hr";
                 checkWithdrawalEligibility();
                 loadWithdrawalRequestsFromCloud();
+            } else if (pageId === 'page-friends') {
+                loadFriendsDataFromCloud();
             }
         }
-
+        
         function renderMarket() {
             marketList.innerHTML = '';
-
             let ePrice = getEnergyUpgradePrice();
             let canAffordEnergy = (coins >= ePrice);
             let eCard = document.createElement('div');
@@ -1372,7 +1443,7 @@
                 </button>
             `;
             marketList.appendChild(eCard);
-
+            
             let bPrice = getBatteryUpgradePrice();
             let canAffordBattery = (coins >= bPrice);
             let bCard = document.createElement('div');
@@ -1392,14 +1463,13 @@
                 </button>
             `;
             marketList.appendChild(bCard);
-
+            
             devices.forEach((dev, index) => {
                 let cost = getDevicePrice(dev);
                 let nextInc = getDeviceNextInc(dev);
                 let isMax = dev.level >= dev.maxLevel;
                 let isLocked = index > 0 && devices[index - 1].level < 5;
                 let lockMessage = isLocked ? `يتطلب وصول ${devices[index - 1].name} إلى لفل 5` : "";
-                
                 let canAfford = (coins >= cost) && !isMax && !isLocked;
                 
                 let card = document.createElement('div');
@@ -1421,10 +1491,9 @@
                 `;
                 marketList.appendChild(card);
             });
-
             updateBatteryStatusCard();
         }
-
+        
         function refreshMarketButtonStates() {
             if(document.getElementById('page-market').classList.contains('active')) {
                 const energyBtn = document.querySelector('.btn-energy-up');
@@ -1432,7 +1501,7 @@
                 
                 const batteryBtn = document.querySelector('.btn-battery-up');
                 if(batteryBtn) batteryBtn.disabled = coins < getBatteryUpgradePrice();
-
+                
                 devices.forEach(dev => {
                     let cost = getDevicePrice(dev);
                     let isMax = dev.level >= dev.maxLevel;
@@ -1444,14 +1513,14 @@
                 });
             }
         }
-
+        
         function updateBatteryStatusCard() {
             let totalPower = calculateTotalPowerDraw();
             powerConsumptionText.innerText = totalPower.toFixed(1) + " نقطة/ثانية";
             let durationMins = ((maxBatteryCapacity / totalPower) / 60).toFixed(1);
             batteryDurationText.innerText = durationMins + " دقيقة (بشحن 100%)";
         }
-
+        
         function buyDevice(devId) {
             let devIndex = devices.findIndex(d => d.id === devId);
             if (devIndex === -1) return;
@@ -1468,7 +1537,7 @@
                 saveDeviceLevelToCloud(dev.id, dev.level);
             }
         }
-
+        
         function buyEnergyUpgrade() {
             let price = getEnergyUpgradePrice();
             if (coins >= price) {
@@ -1481,7 +1550,7 @@
                 saveUserDataToCloud();
             }
         }
-
+        
         function buyBatteryUpgrade() {
             let price = getBatteryUpgradePrice();
             if (coins >= price) {
@@ -1494,26 +1563,22 @@
                 saveUserDataToCloud();
             }
         }
-
+        
         function calculateTotalPowerDraw() {
             return 1.0 + devices.reduce((sum, d) => sum + (d.level * d.powerDraw), 0);
         }
-
+        
         function updateUI() {
             baseMiningRate = calculateTotalDeviceMiningRate();
             coinsDisplay.innerText = Math.floor(coins).toLocaleString();
-
             let ePercent = (currentEnergy / maxEnergy) * 100;
             energyBar.style.height = ePercent + '%';
             energyPercent.innerText = Math.floor(ePercent) + '%';
             energyPointsText.innerText = Math.floor(currentEnergy).toLocaleString() + '/' + maxEnergy.toLocaleString();
-
             let bPercent = Math.min((currentBatteryCharge / maxBatteryCapacity) * 100, 100);
             batteryBar.style.height = bPercent + '%';
             batteryPercent.innerText = Math.floor(bPercent) + '%';
-
             let remainingSeconds = currentBatteryCharge / calculateTotalPowerDraw();
-
             if (currentBatteryCharge <= 0) {
                 batteryTimeVal.innerText = "0m";
                 batteryIcon.className = "fa-solid fa-battery-empty battery-icon red";
@@ -1525,7 +1590,6 @@
                 if (remainingSeconds < 60) batteryTimeVal.innerText = Math.floor(remainingSeconds) + "s";
                 else if (remainingSeconds < 3600) batteryTimeVal.innerText = Math.floor(remainingSeconds / 60) + "m";
                 else batteryTimeVal.innerText = Math.floor(remainingSeconds / 3600) + "h " + Math.floor((remainingSeconds % 3600) / 60) + "m";
-
                 batteryIcon.className = "fa-solid fa-battery-full battery-icon";
                 batteryBar.classList.remove('empty');
                 batteryPercent.style.color = "#34d399";
@@ -1533,32 +1597,28 @@
                 rateText.innerText = baseMiningRate.toLocaleString() + "/hr";
                 batteryWarning.style.display = 'none';
             }
-            
             refreshMarketButtonStates();
             checkWithdrawalEligibility();
         }
-
+        
         setInterval(() => {
             let totalPowerDraw = calculateTotalPowerDraw();
             if (currentBatteryCharge > 0) {
                 currentBatteryCharge = Math.max(0, currentBatteryCharge - totalPowerDraw);
             }
-            
             let effectiveRate = (currentBatteryCharge > 0) ? baseMiningRate : (baseMiningRate * 0.06);
             let earnedThisSec = effectiveRate / 3600;
             
             coins += earnedThisSec;
             currentHourMinedCoins += earnedThisSec;
-
             if (systemState === 'normal' && currentEnergy < maxEnergy) {
                 currentEnergy = Math.min(currentEnergy + energyRegenRate, maxEnergy);
             }
             updateUI();
         }, 1000);
-
+        
         function handleInteraction(clickedBtn) {
             playSound('click');
-
             if (systemState === 'waiting_for_minus') {
                 if (clickedBtn === 'plus') return;
                 else {
@@ -1575,18 +1635,14 @@
                     btnPlus.classList.remove('pulse-animation');
                 }
             }
-
             fanRotation += 60;
             fanIcon.style.transform = `rotate(${fanRotation}deg)`;
-
             let batteryRechargePerClick = Math.max(30, maxBatteryCapacity * 0.025);
-
             if (currentEnergy >= energyCostPerClick) {
                 currentEnergy -= energyCostPerClick;
                 coins += 1;
                 currentHourMinedCoins += 1;
                 currentBatteryCharge = Math.min(currentBatteryCharge + batteryRechargePerClick, maxBatteryCapacity);
-
                 if (clickedBtn === 'plus') {
                     plusClickCount++;
                     minusClickCount = 0;
@@ -1605,19 +1661,18 @@
             }
             updateUI();
         }
-
+        
         const bindTapEvent = (element, type) => {
             element.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(type); }, {passive: false});
             element.addEventListener('mousedown', (e) => { e.preventDefault(); handleInteraction(type); });
         };
-
         bindTapEvent(btnPlus, 'plus');
         bindTapEvent(btnMinus, 'minus');
-
+        
         setInterval(() => {
             saveUserDataToCloud();
         }, 10000);
-
+        
         window.addEventListener('load', () => {
             try {
                 if (window.Telegram && window.Telegram.WebApp) {
@@ -1635,11 +1690,9 @@
                     }
                 }
             } catch(e) {}
-
             loadUserDataFromCloud();
         });
     </script>
-
     <div id="addTaskModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: #151a2f; border: 1px solid #3a477a; border-radius: 16px; padding: 20px; width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 10px;">
             <div style="font-weight: bold; font-size: 15px; color: #fbbd08; text-align: center;">إضافة مهمة جديدة</div>
