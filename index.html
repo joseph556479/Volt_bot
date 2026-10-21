@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rignite - Tap to Earn</title>
+    <!-- مكتبة الأيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة إعلانات Adsgram -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <!-- مكتبة Supabase للاتصال السحابي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #0b0e17;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            justify-content: space-between;
+        }
+        .header {
+            padding-top: 15px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .top-left-income {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            background: rgba(251, 189, 8, 0.12);
+            border: 1px solid #fbbd08;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #fbbd08;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(251, 189, 8, 0.25);
+        }
+        .coin-box {
+            text-align: center;
+            margin-top: 35px;
+        }
+        .coin-title {
+            color: #8c93b7;
+            font-size: 13px;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .coin-value {
+            color: #fbbd08;
+            font-size: 34px;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(251, 189, 8, 0.4);
+        }
+        .pages-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .page {
+            display: none;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+        .page.active {
+            display: flex;
+        }
+        .game-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            height: 52%;
+            position: relative;
+        }
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 95%;
+            gap: 10px;
+        }
+        .bar-container {
+            width: 70px;
+            flex: 1;
+            background-color: #151a2f;
+            border: 2px solid #283366;
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 3px;
+        }
+        .energy-fill {
+            width: 100%;
+            background: linear-gradient(0deg, #0055ff, #00d2ff);
+            border-radius: 8px;
+            transition: height 0.2s;
+        }
+        .battery-fill {
+            width: 100%;
+            background: linear-gradient(0deg, #10b981, #34d399);
+            border-radius: 8px;
+            transition: height 0.2s, background 0.3s;
+        }
+        .battery-fill.empty {
+            background: linear-gradient(0deg, #dc2626, #ef4444);
+        }
+        .bar-info {
+            position: absolute;
+            top: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 140%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            z-index: 5;
+        }
+        .bar-percentage {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .bar-points {
+            font-size: 11px;
+            color: #8c93b7;
+            white-space: nowrap;
+        }
+        .battery-time-box {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            color: #000000;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+        .battery-icon {
+            font-size: 15px;
+            color: #34d399;
+            transition: color 0.3s;
+        }
+        .battery-icon.red {
+            color: #ef4444;
+        }
+        .ad-btn {
+            background: linear-gradient(180deg, #1d253f 0%, #111625 100%);
+            border: 1px solid #3a477a;
+            color: #fbbd08;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
+            width: 100%;
+        }
+        .ad-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .ad-btn i {
+            font-size: 12px;
+        }
+        .center-fan-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .fan-icon {
+            font-size: 70px;
+            color: #00d2ff;
+            filter: drop-shadow(0 0 15px rgba(0, 210, 255, 0.45));
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .controls-wrapper {
+            padding: 0 25px 10px 25px;
+            position: relative;
+        }
+        .battery-warning {
+            text-align: center;
+            color: #ef4444;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: none;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+            animation: blinkWarning 1s infinite alternate;
+        }
+        @keyframes blinkWarning {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .action-btn {
+            flex: 1;
+            height: 52px;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+            touch-action: manipulation;
+        }
+        .action-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.5);
+        }
+        .btn-plus {
+            background: linear-gradient(180deg, #1d61b3 0%, #0d3870 100%);
+            border: 2px solid #2e82ea;
+        }
+        .btn-minus {
+            background: linear-gradient(180deg, #b37d1d 0%, #6e4b09 100%);
+            border: 2px solid #e0a32e;
+        }
+        @keyframes pulseAlert {
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 0, 0, 0.2); }
+            50% { transform: scale(1.12); box-shadow: 0 0 25px rgba(255, 0, 0, 0.8); border-color: red;}
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 0, 0, 0.2); }
+        }
+        .pulse-animation {
+            animation: pulseAlert 0.6s infinite !important;
+            z-index: 10;
+        }
+        #page-market {
+            padding: 15px 20px;
+            justify-content: flex-start;
+        }
+        .market-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #fff;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .battery-status-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #d1fae5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .device-card {
+            background: #151a2f;
+            border: 1px solid #283366;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        .device-card.locked {
+            opacity: 0.65;
+            border-color: #3f4d7a;
+            background: #0f1322;
+        }
+        .device-icon-box {
+            width: 48px;
+            height: 48px;
+            background: rgba(251, 189, 8, 0.1);
+            border: 1px solid #fbbd08;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #fbbd08;
+            flex-shrink: 0;
+        }
+        .device-icon-box.battery-type {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+            color: #10b981;
+        }
+        .device-icon-box.energy-type {
+            background: rgba(0, 210, 255, 0.1);
+            border-color: #00d2ff;
+            color: #00d2ff;
+        }
+        .device-info {
+            flex: 1;
+            margin: 0 12px;
+        }
+        .device-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        .device-stats {
+            font-size: 11px;
+            color: #8c93b7;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .lock-msg {
+            color: #ef4444;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        .buy-btn {
+            background: linear-gradient(180deg, #fbbd08 0%, #c79502 100%);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #0b0e17;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 90px;
+            transition: opacity 0.2s;
+        }
+        .buy-btn:disabled {
+            background: #283366 !important;
+            color: #64748b !important;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .buy-cost {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        #page-exchange {
+            padding: 20px;
+            justify-content: flex-start;
+            gap: 15px;
+        }
+        .exchange-hero-card {
+            background: linear-gradient(135deg, #151a2f 0%, #1f2a48 100%);
+            border: 1px solid #3a477a;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .exchange-hero-title {
+            font-size: 13px;
+            color: #8c93b7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .exchange-hero-price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+            margin-bottom: 8px;
+        }
+        .exchange-hero-desc {
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+        .exchange-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-box {
+            background: #151a2f;
+            border: 1px solid #283366;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-box-title {
+            font-size: 11px;
+            color: #8c93b7;
+            margin-bottom: 4px;
+        }
+        .stat-box-val {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fbbd08;
+        }
+        .exchange-info-card {
+            background: rgba(251, 189, 8, 0.08);
+            border: 1px solid rgba(251, 189, 8, 0.3);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 12px;
+            color: #fef08a;
+            line-height: 1.5;
+        }
+        .bottom-nav {
+            height: 65px;
+            background-color: #111625;
+            border-top: 1px solid #283366;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #8c93b7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+            transition: color 0.2s;
+        }
+        .nav-item i {
+            font-size: 20px;
+        }
+        .nav-item.active {
+            color: #fbbd08;
+            font-weight: bold;
+        }
+        .nav-item.active i {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 6px rgba(251, 189, 8, 0.5));
+        }
+        .copy-btn {
+            background: #283366;
+            color: #00d2ff;
+            border: 1px solid #00d2ff;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 5px;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: #00d2ff;
+            color: #0b0e17;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="top-left-income" id="miningRateDisplay">
+            <i class="fa-solid fa-bolt"></i>
+            <span id="rateText">5/hr</span>
+        </div>
+        <div class="coin-box">
+            <div class="coin-title">إجمالي التعدين</div>
+            <div class="coin-value" id="coinsDisplay">10,000,000</div>
+        </div>
+    </div>
+    <div class="pages-wrapper">
+        <div id="page-mine" class="page active">
+            <div class="game-area">
+                <div class="bar-wrapper">
+                    <div class="bar-container">
+                        <div class="bar-info">
+                            <div class="bar-percentage" id="energyPercent">100%</div>
+                            <div class="bar-points" id="energyPointsText">500/500</div>
+                        </div>
+                        <div class="energy-fill" id="energyBar" style="height: 100%;"></div>
+                    </div>
+                    <button class="ad-btn" onclick="rewardEnergyAd()">
+                        <i class="fa-solid fa-tv"></i> +100%
+                    </button>
+                </div>
+                <div class="center-fan-box">
+                    <i class="fa-solid fa-fan fan-icon" id="fanIcon"></i>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar-container">
+                        <div class="bar-info">
+                            <i class="fa-solid fa-battery-full battery-icon" id="batteryIcon"></i>
+                            <div class="bar-percentage" id="batteryPercent" style="color: #34d399;">100%</div>
+                            <div class="bar-points" id="batteryPointsText" style="display: none;">5000/5000</div>
+                            <div class="battery-time-box" id="batteryTimeBox">
+                                <i class="fa-solid fa-hourglass-half" style="font-size: 10px;"></i>
+                                <span id="batteryTimeVal">83m</span>
+                            </div>
+                        </div>
+                        <div class="battery-fill" id="batteryBar" style="height: 100%;"></div>
+                    </div>
+                    <button class="ad-btn" onclick="rewardBatteryAd()">
+                        <i class="fa-solid fa-tv"></i> +20%
+                    </button>
+                </div>
+            </div>
+            <div class="controls-wrapper">
+                <div class="battery-warning" id="batteryWarning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    البطارية فارغة! انخفضت كفاءة التعدين إلى 6%
+                </div>
+                <div class="controls">
+                    <button class="action-btn btn-plus" id="btnPlus">+</button>
+                    <button class="action-btn btn-minus" id="btnMinus">-</button>
+                </div>
+            </div>
+        </div>
+        <div id="page-market" class="page">
+            <div class="market-title">
+                <i class="fa-solid fa-store"></i> متجر التطويرات والأجهزة
+            </div>
+            <div class="battery-status-card" id="batterySummary">
+                <div>
+                    <div><strong>استهلاك الطاقة الحالي:</strong> <span id="powerConsumptionText">1.0 نقطة/ث</span></div>
+                    <div><strong>مدة استمرار البطارية:</strong> <span id="batteryDurationText">83.3 دقيقة</span></div>
+                </div>
+                <i class="fa-solid fa-car-battery" style="font-size: 24px; color: #10b981;"></i>
+            </div>
+            <div id="market-list"></div>
+        </div>
+        <div id="page-exchange" class="page">
+            <div class="market-title">
+                <i class="fa-solid fa-chart-line"></i> سوق التبادل والقيمة السوقية
+            </div>
+            <div class="exchange-hero-card">
+                <div class="exchange-hero-title">سعر العملة الحالي (لكل 1,000,000 عملة)</div>
+                <div class="exchange-hero-price" id="tokenPriceDisplay">$0.000000</div>
+                <div class="exchange-hero-desc">يتم تحديث السعر تلقائياً كل ساعة بناءً على إجمالي التعدين ومشاهدات الإعلانات العامة.</div>
+            </div>
+            <div class="exchange-stats-grid">
+                <div class="stat-box">
+                    <div class="stat-box-title">إجمالي التعدين (الساعة الحالية)</div>
+                    <div class="stat-box-val" id="hourlyMinedDisplay">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-title">إعلانات المشاهدة (الساعة الحالية)</div>
+                    <div class="stat-box-val" id="hourlyAdsDisplay">0</div>
+                </div>
+            </div>
+            <div class="exchange-info-card">
+                <i class="fa-solid fa-circle-info"></i> 
+                <strong>آلية حساب السعر (Cloud Sync):</strong><br>
+                يتم رفع العملات التي يعدنها كل المستخدمين فعلياً وضغطات الإعلانات إلى قاعدة البيانات السحابية كل ساعة. تُحسب القيمة بناءً على معادلتك الذكية.
+            </div>
+        </div>
+        <div id="page-tasks" class="page" style="padding: 15px 20px; justify-content: flex-start; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; width: 100%;">
+                <div class="market-title" style="margin-bottom: 0;">
+                    <i class="fa-solid fa-list-check"></i> مهام المجتمع
+                </div>
+                <button onclick="openAddTaskModal()" style="background: linear-gradient(180deg, #fbbd08 0%, #c79502 100%); border: none; border-radius: 8px; padding: 6px 12px; font-weight: bold; color: #0b0e17; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-plus"></i> إضافة مهمة
+                </button>
+            </div>
+            <div id="tasks-container" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="device-card" style="margin-bottom: 0;" id="defaultTgTaskCard">
+                    <div class="device-icon-box" style="background: rgba(0, 136, 204, 0.1); border-color: #0088cc; color: #0088cc;">
+                        <i class="fa-brands fa-telegram"></i>
+                    </div>
+                    <div class="device-info">
+                        <div class="device-name">انضم لقناة التليجرام الرسمية</div>
+                        <div class="device-stats">
+                            <span style="color: #fbbd08;">+3,000 عملة 🪙 (تتجدد يومياً)</span>
+                        </div>
+                    </div>
+                    <button class="buy-btn" id="btn_default_tg" onclick="verifyAndCompleteDefaultTask()" style="background: linear-gradient(180deg, #0088cc 0%, #005588 100%); color: white;">
+                        تحقق وتنفيذ
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="page-friends" class="page" style="padding: 15px 20px; justify-content: flex-start; overflow-y: auto; gap: 12px;">
+            <div class="market-title">
+                <i class="fa-solid fa-user-group"></i> نظام دعوة الأصدقاء
+            </div>
+            <div class="exchange-hero-card" style="padding: 15px;">
+                <div class="exchange-hero-title">اكسب مع أصدقائك</div>
+                <div class="exchange-hero-price" style="font-size: 20px; color: #fbbd08; margin-bottom: 4px;">+2,500 عملة لكل صديق</div>
+                <div class="exchange-hero-desc">شارك رابط الإحالة الخاص بك مع أصدقائك، واحصل على مكافأة فورية بالإضافة إلى نسبة من أرباحهم!</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="refLinkInput" readonly value="https://t.me/Volt_Mining_bot?start=ref" style="flex: 1; background: #151a2f; border: 1px solid #283366; border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; outline: none;" />
+                <button onclick="copyRefLink()" style="background: #fbbd08; border: none; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; color: #0b0e17; font-size: 12px;">نسخ الرابط</button>
+            </div>
+            <div class="stat-box" style="text-align: right; padding: 12px;">
+                <div class="stat-box-title" style="margin-bottom: 6px;">الأصدقاء المدعوون: <span id="friendsCount" style="color: #fbbd08; font-weight: bold;">0</span></div>
+                <div class="stat-box-title">إجمالي أرباح الإحالات: <span id="refEarnings" style="color: #10b981; font-weight: bold;">0 🪙</span></div>
+            </div>
+            <div style="font-weight: bold; font-size: 13px; color: #8c93b7; margin-top: 5px;">قائمة الأصدقاء المنضمين:</div>
+            <div id="friends-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="device-card" style="margin-bottom: 0; justify-content: center; color: #8c93b7; font-size: 12px; padding: 15px;">
+                    لم تقم بدعوة أي صديق حتى الآن. ابدأ بمشاركة الرابط!
+                </div>
+            </div>
+        </div>
+        <div id="page-profile" class="page" style="padding: 15px 20px; justify-content: flex-start; overflow-y: auto; gap: 12px;">
+            <div class="market-title">
+                <i class="fa-solid fa-user"></i> الملف الشخصي والإعدادات
+            </div>
+            <div class="exchange-hero-card" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px;">
+                <div style="width: 65px; height: 65px; background: rgba(251,189,8,0.15); border: 2px solid #fbbd08; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fbbd08;">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <div id="profileName" style="font-size: 16px; font-weight: bold; color: #fff;">معدل ريغنايت</div>
+                <div id="profileId" style="font-size: 11px; color: #8c93b7;">ID: جارٍ الجلب...</div>
+            </div>
+            <div class="exchange-stats-grid">
+                <div class="stat-box">
+                    <div class="stat-box-title">إجمالي العملات المحفوظة</div>
+                    <div class="stat-box-val" id="profileTotalCoins">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-title">معدل التعدين الحالي</div>
+                    <div class="stat-box-val" id="profileMiningRate">5/hr</div>
+                </div>
+            </div>
+            <div id="withdrawalSection" style="background: #151a2f; border: 1px solid #10b981; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: all 0.3s;">
+                <div style="font-weight: bold; font-size: 14px; color: #10b981; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-wallet"></i> سحب الأرباح 
+                    <span id="withdrawLockBadge" style="font-size: 10px; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px;">مغلق (يحتاج 1M)</span>
+                </div>
+                <div id="withdrawDesc" style="font-size: 11px; color: #8c93b7;">يفتح خيار السحب تلقائياً عند وصول رصيدك إلى 1,000,000 عملة.</div>
+                
+                <div class="withdraw-form-element">
+                    <label style="font-size: 10px; color: #8c93b7; display: block; margin-bottom: 3px;">طريقة الدفع:</label>
+                    <select id="withdrawMethod" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;">
+                        <option value="binance">Binance ID</option>
+                        <option value="gram">عنوان Gram (TON)</option>
+                        <option value="usdt">عنوان USDT (BNB Smart Chain)</option>
+                    </select>
+                </div>
+                <div class="withdraw-form-element">
+                    <label style="font-size: 10px; color: #8c93b7; display: block; margin-bottom: 3px;">المبلغ المراد سحبه (الحد الأدنى 1,000,000):</label>
+                    <input type="number" id="withdrawAmount" placeholder="1000000" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+                </div>
+                <div class="withdraw-form-element">
+                    <label style="font-size: 10px; color: #8c93b7; display: block; margin-bottom: 3px;">معرف الحساب أو العنوان (Address / ID):</label>
+                    <input type="text" id="withdrawAddress" placeholder="أدخل العنوان هنا..." style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+                </div>
+                <button id="withdrawBtn" onclick="submitWithdrawal()" style="background: linear-gradient(180deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; padding: 10px; color: #fff; font-weight: bold; font-size: 12px; cursor: pointer;">
+                    إرسال طلب السحب
+                </button>
+            </div>
+            <div id="userWithdrawalStatusCard" style="background: #151a2f; border: 1px solid #3a477a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-weight: bold; font-size: 13px; color: #fbbd08; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fa-solid fa-clock-rotate-left"></i> سجل عمليات السحب الخاصة بك:</span>
+                </div>
+                <div id="userRequestsHistoryList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                    <div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد أي طلبات سحب سابقة</div>
+                </div>
+            </div>
+            <div id="adminPanelSection" style="background: #111625; border: 1px solid #3a477a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-weight: bold; font-size: 13px; color: #fbbd08; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-shield-halved"></i> لوحة تحكم الأدمن (إدارة الطلبات)
+                </div>
+                <div style="font-size: 10px; color: #8c93b7;">تظهر أحدث الطلبات في الأعلى. راجع التفاصيل واضغط نسخ العنوان ثم حدد المربع لاكتمال الطلب:</div>
+                <div id="adminRequestsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;">
+                    <div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد طلبات سحب حالياً</div>
+                </div>
+            </div>
+            <div class="device-card" style="margin-bottom: 0; cursor: pointer;" onclick="resetGameData()">
+                <div class="device-icon-box" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </div>
+                <div class="device-info">
+                    <div class="device-name" style="color: #ef4444;">إعادة ضبط وتصفير البيانات</div>
+                    <div class="device-stats">مسح التقدم والبدء من جديد بالكامل وتصفير السرعة</div>
+                </div>
+                <i class="fa-solid fa-chevron-left" style="color: #ef4444; font-size: 12px;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchPage('page-mine', this)">
+            <i class="fa-solid fa-hammer"></i>
+            <span>Mine</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('page-market', this)">
+            <i class="fa-solid fa-store"></i>
+            <span>Market</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('page-exchange', this)">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Exchange</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('page-tasks', this)">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Tasks</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('page-friends', this)">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Friends</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('page-profile', this)">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </button>
+    </div>
+    <script>
+        // --- إعدادات اتصال Supabase السحابي ---
+        const SUPABASE_URL = 'https://biennfghsvreatzmldpt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_XtKpUAA1b1_QJEt_LfvJ_Q_7xvSmdeS'; 
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // معرف ثابت للمتصفح لمنع تصفير البيانات عند الـ Refresh
+        let currentTelegramId = localStorage.getItem('rignite_browser_uid');
+        if (!currentTelegramId) {
+            currentTelegramId = Math.floor(100000000 + Math.random() * 900000000);
+            localStorage.setItem('rignite_browser_uid', currentTelegramId);
+        } else {
+            currentTelegramId = parseInt(currentTelegramId);
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let ambientNode = null;
+        function startAmbientSound() {
+            try {
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                if (ambientNode) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(55, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.003, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                ambientNode = osc;
+            } catch(e) {}
+        }
+        window.addEventListener('click', () => {
+            startAmbientSound();
+        }, { once: true });
+
+        function playSound(type) {
+            try {
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                if (type === 'nav') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(780, audioCtx.currentTime + 0.04);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.04);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(280, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                }
+            } catch(e) {}
+        }
+
+        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "51322" }) : null;
+        let coins = 10000000; 
+        let defaultBaseMining = 5; 
+        let baseMiningRate = 5;         
+
+        let maxEnergy = 500;
+        let currentEnergy = 500;
+        let energyUpgradeLevel = 0;
+        let baseEnergyPrice = 400;
+        let energyCostPerClick = 10;
+        let energyRegenRate = 5;        
+
+        let maxBatteryCapacity = 5000;  
+        let currentBatteryCharge = 5000;
+        let batteryUpgradeLevel = 0;    
+        let baseBatteryPrice = 600;     
+
+        let currentHourMinedCoins = 0;
+        let currentHourAdsWatched = 0;
+        let plusClickCount = 0;
+        let minusClickCount = 0;
+        let systemState = 'normal';
+        let fanRotation = 0;
+
+        // مصفوفة الأجهزة المعدلة منطقياً باقتصاد متدرج
+        let devices = [
+            { id: 'dev_pi', name: 'شريحة Raspberry Pi', basePrice: 150, baseInc: 12, powerDraw: 0.05, level: 0, maxLevel: 50, icon: 'fa-microchip' },
+            { id: 'dev_cpu', name: 'معالج CPU متطور', basePrice: 1200, baseInc: 95, powerDraw: 0.15, level: 0, maxLevel: 50, icon: 'fa-memory' },
+            { id: 'dev_gpu', name: 'كرت شاشة GPU خارق', basePrice: 9500, baseInc: 780, powerDraw: 0.45, level: 0, maxLevel: 50, icon: 'fa-display' },
+            { id: 'dev_asic', name: 'جهاز ASIC Miner', basePrice: 75000, baseInc: 6200, powerDraw: 1.2, level: 0, maxLevel: 50, icon: 'fa-server' },
+            { id: 'dev_farm', name: 'مزرعة تعدين سحابية', basePrice: 550000, baseInc: 48000, powerDraw: 3.5, level: 0, maxLevel: 50, icon: 'fa-cubes' },
+            { id: 'dev_datacenter', name: 'مركز بيانات DataCenter', basePrice: 4200000, baseInc: 380000, powerDraw: 9.0, level: 0, maxLevel: 50, icon: 'fa-network-wired' },
+            { id: 'dev_quantum', name: 'كمبيوتر كوانتم الكوانتي', basePrice: 35000000, baseInc: 3100000, powerDraw: 22.0, level: 0, maxLevel: 50, icon: 'fa-atom' },
+            { id: 'dev_satellite', name: 'قمر صناعي مداري فضائي', basePrice: 280000000, baseInc: 25000000, powerDraw: 50.0, level: 0, maxLevel: 50, icon: 'fa-satellite-dish' }
+        ];
+
+        const coinsDisplay = document.getElementById('coinsDisplay');
+        const rateText = document.getElementById('rateText');
+        const energyBar = document.getElementById('energyBar');
+        const energyPercent = document.getElementById('energyPercent');
+        const energyPointsText = document.getElementById('energyPointsText');
+        const batteryBar = document.getElementById('batteryBar');
+        const batteryPercent = document.getElementById('batteryPercent');
+        const batteryTimeVal = document.getElementById('batteryTimeVal');
+        const batteryIcon = document.getElementById('batteryIcon');
+        const fanIcon = document.getElementById('fanIcon');
+        const btnPlus = document.getElementById('btnPlus');
+        const btnMinus = document.getElementById('btnMinus');
+        const batteryWarning = document.getElementById('batteryWarning');
+        const marketList = document.getElementById('market-list');
+        const powerConsumptionText = document.getElementById('powerConsumptionText');
+        const batteryDurationText = document.getElementById('batteryDurationText');
+        const tokenPriceDisplay = document.getElementById('tokenPriceDisplay');
+        const hourlyMinedDisplay = document.getElementById('hourlyMinedDisplay');
+        const hourlyAdsDisplay = document.getElementById('hourlyAdsDisplay');
+
+        // معادلة حساب الزيادة والإنتاج للأجهزة بالنمو المتصاعد
+        function getDeviceNextInc(dev) {
+            return Math.floor(dev.baseInc * Math.pow(1.08, dev.level));
+        }
+
+        function calculateTotalDeviceMiningRate() {
+            let total = defaultBaseMining;
+            devices.forEach(dev => {
+                for(let l = 0; l < dev.level; l++) {
+                    total += Math.floor(dev.baseInc * Math.pow(1.08, l));
+                }
+            });
+            return total;
+        }
+
+        function getDevicePrice(dev) { 
+            return Math.floor(dev.basePrice * Math.pow(1.15, dev.level)); 
+        }
+
+        function getBatteryUpgradePrice() { 
+            return Math.floor(baseBatteryPrice * Math.pow(1.22, batteryUpgradeLevel)); 
+        }
+
+        function getEnergyUpgradePrice() { 
+            return Math.floor(baseEnergyPrice * Math.pow(1.18, energyUpgradeLevel)); 
+        }
+
+        function copyRefLink() {
+            const input = document.getElementById('refLinkInput');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            alert("تم نسخ رابط الإحالة بنجاح!");
+        }
+
+        async function loadUserDataFromCloud() {
+            try {
+                let { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', currentTelegramId)
+                    .maybeSingle();
+
+                if (data) {
+                    coins = parseFloat(data.coins);
+                    currentEnergy = parseFloat(data.current_energy);
+                    maxEnergy = parseFloat(data.max_energy);
+                    energyUpgradeLevel = data.energy_upgrade_level || 0;
+                    currentBatteryCharge = parseFloat(data.current_battery);
+                    maxBatteryCapacity = parseFloat(data.max_battery);
+                    batteryUpgradeLevel = data.battery_upgrade_level || 0;
+                    currentHourAdsWatched = data.ads_watched || 0;
+                } else {
+                    await supabaseClient.from('users').insert([{
+                        telegram_id: currentTelegramId,
+                        coins: coins,
+                        base_mining_rate: defaultBaseMining,
+                        current_energy: currentEnergy,
+                        max_energy: maxEnergy,
+                        current_battery: currentBatteryCharge,
+                        max_battery: maxBatteryCapacity
+                    }]);
+                }
+                await loadUserDevicesFromCloud();
+                await loadWithdrawalRequestsFromCloud();
+                renderCustomTasks();
+                updateUI();
+                updateExchangeUI();
+            } catch (e) {
+                console.error("خطأ في الاتصال بالسحابة:", e);
+            }
+        }
+
+        async function saveUserDataToCloud() {
+            try {
+                baseMiningRate = calculateTotalDeviceMiningRate();
+                await supabaseClient.from('users').upsert({
+                    telegram_id: currentTelegramId,
+                    coins: coins,
+                    base_mining_rate: baseMiningRate,
+                    current_energy: currentEnergy,
+                    max_energy: maxEnergy,
+                    energy_upgrade_level: energyUpgradeLevel,
+                    current_battery: currentBatteryCharge,
+                    max_battery: maxBatteryCapacity,
+                    battery_upgrade_level: batteryUpgradeLevel,
+                    ads_watched: currentHourAdsWatched
+                });
+            } catch (e) {}
+        }
+
+        async function loadUserDevicesFromCloud() {
+            let { data } = await supabaseClient
+                .from('user_devices')
+                .select('*')
+                .eq('telegram_id', currentTelegramId);
+
+            if (data && data.length > 0) {
+                data.forEach(dbDev => {
+                    let localDev = devices.find(d => d.id === dbDev.device_id);
+                    if (localDev) localDev.level = dbDev.level;
+                });
+            }
+            baseMiningRate = calculateTotalDeviceMiningRate();
+            renderMarket();
+        }
+
+        async function saveDeviceLevelToCloud(deviceId, level) {
+            await supabaseClient.from('user_devices').upsert({
+                telegram_id: currentTelegramId,
+                device_id: deviceId,
+                level: level
+            }, { onConflict: 'telegram_id,device_id' });
+        }
+
+        async function resetGameData() {
+            if (confirm("هل أنت متأكد حقاً من تصفير جميع بياناتك والبدء من جديد من المستوى 1؟")) {
+                coins = 0;
+                baseMiningRate = defaultBaseMining;
+                maxEnergy = 500;
+                currentEnergy = 500;
+                energyUpgradeLevel = 0;
+                maxBatteryCapacity = 5000;
+                currentBatteryCharge = 5000;
+                batteryUpgradeLevel = 0;
+                currentHourAdsWatched = 0;
+                devices.forEach(d => d.level = 0);
+
+                await saveUserDataToCloud();
+                for(let dev of devices) {
+                    await saveDeviceLevelToCloud(dev.id, 0);
+                }
+
+                updateUI();
+                renderMarket();
+                loadWithdrawalRequestsFromCloud();
+                alert("تم إعادة ضبط الحساب بنجاح وإرجاع كافة مستويات الأجهزة ومعدل التعدين إلى الأساسي!");
+            }
+        }
+
+        function checkWithdrawalEligibility() {
+            const section = document.getElementById('withdrawalSection');
+            const lockBadge = document.getElementById('withdrawLockBadge');
+            const withdrawDesc = document.getElementById('withdrawDesc');
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            const formElements = document.querySelectorAll('.withdraw-form-element');
+
+            if (coins >= 1000000) {
+                section.style.opacity = '1';
+                section.style.pointerEvents = 'auto';
+                lockBadge.style.background = '#10b981';
+                lockBadge.innerText = 'مفتوح (مؤهل)';
+                withdrawDesc.innerText = 'يمكنك الآن سحب أرباحك إلى محفظتك أو منصة بايننس!';
+                withdrawBtn.disabled = false;
+                formElements.forEach(el => el.style.opacity = '1');
+            } else {
+                section.style.opacity = '0.35';
+                section.style.pointerEvents = 'none';
+                lockBadge.style.background = '#ef4444';
+                lockBadge.innerText = 'مغلق (يحتاج 1M)';
+                withdrawDesc.innerText = 'يفتح خيار السحب تلقائياً عند وصول رصيدك إلى 1,000,000 عملة.';
+                withdrawBtn.disabled = true;
+                formElements.forEach(el => el.style.opacity = '0.5');
+            }
+        }
+
+        async function submitWithdrawal() {
+            const method = document.getElementById('withdrawMethod').value;
+            const amountInput = document.getElementById('withdrawAmount').value;
+            const amount = parseInt(amountInput);
+            const address = document.getElementById('withdrawAddress').value.trim();
+
+            if (!amount || amount < 1000000) {
+                alert("الحد الأدنى لطلب السحب هو 1,000,000 عملة!");
+                return;
+            }
+
+            if (!address) {
+                alert("الرجاء إدخال عنوان أو معرف السحب بشكل صحيح!");
+                return;
+            }
+
+            if (coins < amount) {
+                alert("رصيدك الحالي لا يكفي لهذا المبلغ المراد سحبه!");
+                return;
+            }
+
+            let coinPriceUSD = coins > 0 ? (currentHourAdsWatched * 0.0003 * 0.30) / coins : 0;
+            let pricePerMillion = coinPriceUSD * 1000000;
+            let usdEquivalent = ((amount / 1000000) * (pricePerMillion > 0 ? pricePerMillion : 0.05)).toFixed(4);
+
+            coins -= amount;
+            updateUI();
+            saveUserDataToCloud();
+
+            await supabaseClient.from('withdrawal_requests').insert([{
+                telegram_id: currentTelegramId,
+                method,
+                amount,
+                address,
+                usd_val: usdEquivalent,
+                status: 'pending'
+            }]);
+
+            document.getElementById('withdrawAddress').value = '';
+            document.getElementById('withdrawAmount').value = '';
+            loadWithdrawalRequestsFromCloud();
+            alert("تم إرسال طلب السحب بنجاح وحالته الآن (Pending)!");
+        }
+
+        async function loadWithdrawalRequestsFromCloud() {
+            let { data } = await supabaseClient
+                .from('withdrawal_requests')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (data) {
+                renderUserWithdrawalHistory(data);
+                renderAdminRequests(data);
+            }
+        }
+
+        function renderUserWithdrawalHistory(requests) {
+            const historyContainer = document.getElementById('userRequestsHistoryList');
+            let userReqs = requests.filter(r => r.telegram_id === currentTelegramId);
+
+            if (userReqs.length === 0) {
+                historyContainer.innerHTML = `<div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد أي طلبات سحب سابقة</div>`;
+                return;
+            }
+
+            historyContainer.innerHTML = '';
+            [...userReqs].reverse().forEach(req => {
+                let isCompleted = req.status === 'completed';
+                let item = document.createElement('div');
+                item.style.cssText = "background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;";
+                item.innerHTML = `
+                    <div>
+                        <div style="color: #fbbd08; font-weight: bold;">${req.amount.toLocaleString()} عملة (${req.method.toUpperCase()})</div>
+                        <div style="color: #8c93b7; font-size: 10px; word-break: break-all;">العنوان: ${req.address}</div>
+                        <div style="color: #64748b; font-size: 9px;">التاريخ: ${new Date(req.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                        <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}; color: ${isCompleted ? '#10b981' : '#f59e0b'}; border: 1px solid ${isCompleted ? '#10b981' : '#f59e0b'};">
+                            ${isCompleted ? 'مكتمل ✓' : 'قيد المعالجة ⏳'}
+                        </span>
+                    </div>
+                `;
+                historyContainer.appendChild(item);
+            });
+        }
+
+        function renderAdminRequests(requests) {
+            const listContainer = document.getElementById('adminRequestsList');
+            if (!requests || requests.length === 0) {
+                listContainer.innerHTML = `<div style="font-size: 11px; color: #64748b; text-align: center; padding: 5px;">لا توجد طلبات سحب حالياً</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            [...requests].reverse().forEach((req) => {
+                let isCompleted = req.status === 'completed';
+                let item = document.createElement('div');
+                item.style.cssText = "background: #151a2f; border: 1px solid #283366; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 11px;";
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #fbbd08; font-weight: bold;">${req.amount.toLocaleString()} عملة (${req.method})</span>
+                        <span style="color: #10b981; font-weight: bold;">القيمة: ~$${req.usd_val}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #0b0e17; padding: 6px 8px; border-radius: 6px;">
+                        <span style="color: #a7f3d0; font-size: 10px; word-break: break-all;">${req.address}</span>
+                        <button class="copy-btn" onclick="copyAddressText('${req.address}')"><i class="fa-solid fa-copy"></i> نسخ</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                        <span style="color: #64748b; font-size: 9px;">معرف المستخدم: ${req.telegram_id}</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: ${isCompleted ? '#10b981' : '#f59e0b'}; font-weight: bold; font-size: 10px;">
+                                ${isCompleted ? 'مكتمل (Completed)' : 'معلق (Pending)'}
+                            </span>
+                            <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleRequestStatus(${req.id}, this)" style="width: 18px; height: 18px; cursor: pointer; accent-color: #10b981;" />
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function copyAddressText(text) {
+            navigator.clipboard.writeText(text);
+            alert("تم نسخ العنوان إلى الحافظة بنجاح!");
+        }
+
+        async function toggleRequestStatus(reqId, checkbox) {
+            let newStatus = checkbox.checked ? 'completed' : 'pending';
+            await supabaseClient.from('withdrawal_requests').update({ status: newStatus }).eq('id', reqId);
+            loadWithdrawalRequestsFromCloud();
+        }
+
+        function openAddTaskModal() {
+            document.getElementById('addTaskModalOverlay').style.display = 'flex';
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModalOverlay').style.display = 'none';
+        }
+
+        async function saveNewTask() {
+            const title = document.getElementById('newTaskTitle').value.trim();
+            const platform = document.getElementById('newTaskPlatform').value;
+            const url = document.getElementById('newTaskUrl').value.trim();
+            const cost = parseInt(document.getElementById('newTaskCost').value) || 1000;
+            const maxPeople = parseInt(document.getElementById('newTaskMaxPeople').value) || 5;
+
+            if (!title || !url) {
+                alert("الرجاء إدخال عنوان المهمة والرابط بشكل صحيح!");
+                return;
+            }
+
+            if (coins < cost) {
+                alert("رصيدك الحالي غير كافٍ لإنشاء وتكلفة هذه المهمة!");
+                return;
+            }
+
+            coins -= cost;
+            saveUserDataToCloud();
+
+            await supabaseClient.from('custom_tasks').insert([{
+                creator_id: currentTelegramId,
+                title,
+                platform,
+                url,
+                cost,
+                max_people: maxPeople,
+                current_completions: 0,
+                reward_per_user: Math.floor(cost / maxPeople)
+            }]);
+
+            closeAddTaskModal();
+            renderCustomTasks();
+            updateUI();
+            
+            document.getElementById('newTaskTitle').value = '';
+            document.getElementById('newTaskUrl').value = '';
+            alert("تم نشر المهمة بنجاح وخصم التكلفة من رصيدك!");
+        }
+
+        async function renderCustomTasks() {
+            const container = document.getElementById('tasks-container');
+            let defaultTaskHtml = container.children[0] ? container.children[0].outerHTML : '';
+            container.innerHTML = defaultTaskHtml;
+
+            let { data: customTasks } = await supabaseClient.from('custom_tasks').select('*');
+            if (!customTasks) return;
+
+            customTasks.forEach(task => {
+                if (task.current_completions >= task.max_people) return;
+
+                let iconClass = "fa-brands fa-telegram";
+                let iconColor = "#0088cc";
+                if(task.platform === 'youtube') { iconClass = "fa-brands fa-youtube"; iconColor = "#ff0000"; }
+                else if(task.platform === 'twitter') { iconClass = "fa-brands fa-x-twitter"; iconColor = "#ffffff"; }
+                else if(task.platform === 'other') { iconClass = "fa-solid fa-globe"; iconColor = "#10b981"; }
+
+                let card = document.createElement('div');
+                card.className = 'device-card';
+                card.style.marginBottom = '0';
+                card.innerHTML = `
+                    <div class="device-icon-box" style="background: rgba(0, 136, 204, 0.1); border-color: ${iconColor}; color: ${iconColor};">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <div class="device-info">
+                        <div class="device-name">${task.title}</div>
+                        <div class="device-stats">
+                            <span style="color: #fbbd08;">+${(task.reward_per_user || 1000).toLocaleString()} عملة 🪙</span>
+                            <span style="font-size: 10px; color: #8c93b7;">المكتملين: ${task.current_completions}/${task.max_people}</span>
+                        </div>
+                    </div>
+                    <button class="buy-btn" id="btn_${task.id}" onclick="executeCustomTask(${task.id}, ${task.reward_per_user}, '${task.url}')">
+                        تنفيذ
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function executeCustomTask(taskId, reward, url) {
+            window.open(url, '_blank');
+            coins += reward;
+            saveUserDataToCloud();
+
+            let { data: task } = await supabaseClient.from('custom_tasks').select('current_completions').eq('id', taskId).single();
+            if (task) {
+                await supabaseClient.from('custom_tasks').update({ current_completions: task.current_completions + 1 }).eq('id', taskId);
+            }
+
+            renderCustomTasks();
+            updateUI();
+            alert(`مبروك! حصلت على ${reward.toLocaleString()} عملة.`);
+        }
+
+        function verifyAndCompleteDefaultTask() {
+            coins += 3000;
+            saveUserDataToCloud();
+            updateUI();
+            alert("مبروك! تم التحقق من انضمامك وحصلت على 3,000 عملة.");
+        }
+
+        function rewardEnergyAd() {
+            if (AdController) {
+                AdController.show().then((result) => {
+                    currentEnergy = maxEnergy;
+                    currentHourAdsWatched++;
+                    updateUI();
+                    updateExchangeUI();
+                    saveUserDataToCloud();
+                }).catch((result) => {
+                    triggerAdFallback('energy');
+                });
+            } else {
+                triggerAdFallback('energy');
+            }
+        }
+
+        function rewardBatteryAd() {
+            if (AdController) {
+                AdController.show().then((result) => {
+                    let rewardAmount = maxBatteryCapacity * 0.20;
+                    currentBatteryCharge = Math.min(currentBatteryCharge + rewardAmount, maxBatteryCapacity);
+                    currentHourAdsWatched++;
+                    updateUI();
+                    updateExchangeUI();
+                    saveUserDataToCloud();
+                }).catch((result) => {
+                    triggerAdFallback('battery');
+                });
+            } else {
+                triggerAdFallback('battery');
+            }
+        }
+
+        function triggerAdFallback(type) {
+            if(confirm("وضع التجربة (متصفح): هل تريد محاكاة مشاهدة الإعلان للحصول على المكافأة؟")) {
+                if(type === 'energy') {
+                    currentEnergy = maxEnergy;
+                } else {
+                    let rewardAmount = maxBatteryCapacity * 0.20;
+                    currentBatteryCharge = Math.min(currentBatteryCharge + rewardAmount, maxBatteryCapacity);
+                }
+                currentHourAdsWatched++;
+                updateUI();
+                updateExchangeUI();
+                saveUserDataToCloud();
+                alert("تم منح المكافأة بنجاح!");
+            }
+        }
+
+        function updateExchangeUI() {
+            hourlyMinedDisplay.innerText = Math.floor(coins).toLocaleString(); 
+            hourlyAdsDisplay.innerText = currentHourAdsWatched.toLocaleString();
+
+            let coinPriceUSD = 0;
+            if (coins > 0) {
+                coinPriceUSD = (currentHourAdsWatched * 0.0003 * 0.30) / coins;
+            }
+            let pricePerMillion = coinPriceUSD * 1000000;
+            tokenPriceDisplay.innerText = "$" + pricePerMillion.toFixed(6);
+        }
+
+        function switchPage(pageId, btn) {
+            playSound('nav');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (pageId === 'page-exchange') {
+                updateExchangeUI();
+            } else if (pageId === 'page-market') {
+                renderMarket();
+            } else if (pageId === 'page-profile') {
+                document.getElementById('profileTotalCoins').innerText = Math.floor(coins).toLocaleString() + " 🪙";
+                document.getElementById('profileMiningRate').innerText = calculateTotalDeviceMiningRate().toLocaleString() + "/hr";
+                checkWithdrawalEligibility();
+                loadWithdrawalRequestsFromCloud();
+            }
+        }
+
+        function renderMarket() {
+            marketList.innerHTML = '';
+
+            let ePrice = getEnergyUpgradePrice();
+            let canAffordEnergy = (coins >= ePrice);
+            let eCard = document.createElement('div');
+            eCard.className = 'device-card';
+            eCard.innerHTML = `
+                <div class="device-icon-box energy-type"><i class="fa-solid fa-bolt"></i></div>
+                <div class="device-info">
+                    <div class="device-name">تطوير سعة الطاقة <span style="font-size:11px; color:#00d2ff;">(Lv.${energyUpgradeLevel})</span></div>
+                    <div class="device-stats">
+                        <span style="color:#00d2ff;">+250 طاقة أقصى للنقر</span>
+                        <span>السعة الحالية: ${maxEnergy.toLocaleString()} طاقة</span>
+                    </div>
+                </div>
+                <button class="buy-btn btn-energy-up" onclick="buyEnergyUpgrade()" ${!canAffordEnergy ? 'disabled' : ''} style="background: linear-gradient(180deg, #00d2ff 0%, #0055ff 100%); color: white;">
+                    <span class="buy-cost">${ePrice.toLocaleString()} 🪙</span>
+                    <span style="font-size:9px;">ترقية الطاقة</span>
+                </button>
+            `;
+            marketList.appendChild(eCard);
+
+            let bPrice = getBatteryUpgradePrice();
+            let canAffordBattery = (coins >= bPrice);
+            let bCard = document.createElement('div');
+            bCard.className = 'device-card';
+            bCard.innerHTML = `
+                <div class="device-icon-box battery-type"><i class="fa-solid fa-car-battery"></i></div>
+                <div class="device-info">
+                    <div class="device-name">تطوير سعة البطارية <span style="font-size:11px; color:#10b981;">(Lv.${batteryUpgradeLevel})</span></div>
+                    <div class="device-stats">
+                        <span style="color:#10b981;">+2,500 سعة إضافية 🔋</span>
+                        <span>السعة الحالية: ${maxBatteryCapacity.toLocaleString()} نقطة</span>
+                    </div>
+                </div>
+                <button class="buy-btn btn-battery-up" onclick="buyBatteryUpgrade()" ${!canAffordBattery ? 'disabled' : ''} style="background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white;">
+                    <span class="buy-cost">${bPrice.toLocaleString()} 🪙</span>
+                    <span style="font-size:9px;">ترقية البطارية</span>
+                </button>
+            `;
+            marketList.appendChild(bCard);
+
+            devices.forEach((dev, index) => {
+                let cost = getDevicePrice(dev);
+                let nextInc = getDeviceNextInc(dev);
+                let isMax = dev.level >= dev.maxLevel;
+                let isLocked = index > 0 && devices[index - 1].level < 5;
+                let lockMessage = isLocked ? `يتطلب وصول ${devices[index - 1].name} إلى لفل 5` : "";
+                
+                let canAfford = (coins >= cost) && !isMax && !isLocked;
+                
+                let card = document.createElement('div');
+                card.className = `device-card ${isLocked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <div class="device-icon-box"><i class="fa-solid ${dev.icon}"></i></div>
+                    <div class="device-info">
+                        <div class="device-name">${dev.name} <span style="font-size:11px; color:#fbbd08;">(Lv.${dev.level}/${dev.maxLevel})</span></div>
+                        <div class="device-stats">
+                            <span style="color:#34d399;">+${nextInc.toLocaleString()} عملة/ساعة الترقية القادمة</span>
+                            <span style="color:#ef4444;">⚡ استهلاك: +${dev.powerDraw} نقطة/ث</span>
+                            ${isLocked ? `<div class="lock-msg"><i class="fa-solid fa-lock"></i> ${lockMessage}</div>` : ''}
+                        </div>
+                    </div>
+                    <button class="buy-btn btn-device-up" id="btn-dev-${dev.id}" data-cost="${cost}" onclick="buyDevice('${dev.id}')" ${!canAfford ? 'disabled' : ''}>
+                        <span class="buy-cost">${isLocked ? 'مغلق 🔒' : (isMax ? 'مكتمل' : cost.toLocaleString() + ' 🪙')}</span>
+                        <span style="font-size:9px;">${isLocked ? 'قفل' : (isMax ? 'MAX' : 'شراء')}</span>
+                    </button>
+                `;
+                marketList.appendChild(card);
+            });
+
+            updateBatteryStatusCard();
+        }
+
+        function refreshMarketButtonStates() {
+            if(document.getElementById('page-market').classList.contains('active')) {
+                const energyBtn = document.querySelector('.btn-energy-up');
+                if(energyBtn) energyBtn.disabled = coins < getEnergyUpgradePrice();
+                
+                const batteryBtn = document.querySelector('.btn-battery-up');
+                if(batteryBtn) batteryBtn.disabled = coins < getBatteryUpgradePrice();
+
+                devices.forEach(dev => {
+                    let cost = getDevicePrice(dev);
+                    let isMax = dev.level >= dev.maxLevel;
+                    let isLocked = devices.indexOf(dev) > 0 && devices[devices.indexOf(dev) - 1].level < 5;
+                    let btn = document.getElementById(`btn-dev-${dev.id}`);
+                    if(btn) {
+                        btn.disabled = (!isMax && !isLocked && coins >= cost) ? false : true;
+                    }
+                });
+            }
+        }
+
+        function updateBatteryStatusCard() {
+            let totalPower = calculateTotalPowerDraw();
+            powerConsumptionText.innerText = totalPower.toFixed(1) + " نقطة/ثانية";
+            let durationMins = ((maxBatteryCapacity / totalPower) / 60).toFixed(1);
+            batteryDurationText.innerText = durationMins + " دقيقة (بشحن 100%)";
+        }
+
+        function buyDevice(devId) {
+            let devIndex = devices.findIndex(d => d.id === devId);
+            if (devIndex === -1) return;
+            let dev = devices[devIndex];
+            if (devIndex > 0 && devices[devIndex - 1].level < 5) return;
+            let cost = getDevicePrice(dev);
+            if (dev.level < dev.maxLevel && coins >= cost) {
+                coins -= cost;
+                dev.level++;
+                baseMiningRate = calculateTotalDeviceMiningRate();
+                updateUI();
+                renderMarket();
+                saveUserDataToCloud();
+                saveDeviceLevelToCloud(dev.id, dev.level);
+            }
+        }
+
+        function buyEnergyUpgrade() {
+            let price = getEnergyUpgradePrice();
+            if (coins >= price) {
+                coins -= price;
+                energyUpgradeLevel++;
+                maxEnergy += 250;
+                currentEnergy += 250;
+                updateUI();
+                renderMarket();
+                saveUserDataToCloud();
+            }
+        }
+
+        function buyBatteryUpgrade() {
+            let price = getBatteryUpgradePrice();
+            if (coins >= price) {
+                coins -= price;
+                batteryUpgradeLevel++;
+                maxBatteryCapacity += 2500;
+                currentBatteryCharge = maxBatteryCapacity;
+                updateUI();
+                renderMarket();
+                saveUserDataToCloud();
+            }
+        }
+
+        function calculateTotalPowerDraw() {
+            return 1.0 + devices.reduce((sum, d) => sum + (d.level * d.powerDraw), 0);
+        }
+
+        function updateUI() {
+            baseMiningRate = calculateTotalDeviceMiningRate();
+            coinsDisplay.innerText = Math.floor(coins).toLocaleString();
+
+            let ePercent = (currentEnergy / maxEnergy) * 100;
+            energyBar.style.height = ePercent + '%';
+            energyPercent.innerText = Math.floor(ePercent) + '%';
+            energyPointsText.innerText = Math.floor(currentEnergy).toLocaleString() + '/' + maxEnergy.toLocaleString();
+
+            let bPercent = Math.min((currentBatteryCharge / maxBatteryCapacity) * 100, 100);
+            batteryBar.style.height = bPercent + '%';
+            batteryPercent.innerText = Math.floor(bPercent) + '%';
+
+            let remainingSeconds = currentBatteryCharge / calculateTotalPowerDraw();
+
+            if (currentBatteryCharge <= 0) {
+                batteryTimeVal.innerText = "0m";
+                batteryIcon.className = "fa-solid fa-battery-empty battery-icon red";
+                batteryBar.classList.add('empty');
+                batteryPercent.style.color = "#ef4444";
+                rateText.innerText = (baseMiningRate * 0.06).toLocaleString(undefined, {maximumFractionDigits: 1}) + "/hr (6%)";
+                batteryWarning.style.display = 'block';
+            } else {
+                if (remainingSeconds < 60) batteryTimeVal.innerText = Math.floor(remainingSeconds) + "s";
+                else if (remainingSeconds < 3600) batteryTimeVal.innerText = Math.floor(remainingSeconds / 60) + "m";
+                else batteryTimeVal.innerText = Math.floor(remainingSeconds / 3600) + "h " + Math.floor((remainingSeconds % 3600) / 60) + "m";
+
+                batteryIcon.className = "fa-solid fa-battery-full battery-icon";
+                batteryBar.classList.remove('empty');
+                batteryPercent.style.color = "#34d399";
+                batteryIcon.style.color = "#34d399";
+                rateText.innerText = baseMiningRate.toLocaleString() + "/hr";
+                batteryWarning.style.display = 'none';
+            }
+            
+            refreshMarketButtonStates();
+            checkWithdrawalEligibility();
+        }
+
+        setInterval(() => {
+            let totalPowerDraw = calculateTotalPowerDraw();
+            if (currentBatteryCharge > 0) {
+                currentBatteryCharge = Math.max(0, currentBatteryCharge - totalPowerDraw);
+            }
+            
+            let effectiveRate = (currentBatteryCharge > 0) ? baseMiningRate : (baseMiningRate * 0.06);
+            let earnedThisSec = effectiveRate / 3600;
+            
+            coins += earnedThisSec;
+            currentHourMinedCoins += earnedThisSec;
+
+            if (systemState === 'normal' && currentEnergy < maxEnergy) {
+                currentEnergy = Math.min(currentEnergy + energyRegenRate, maxEnergy);
+            }
+            updateUI();
+        }, 1000);
+
+        function handleInteraction(clickedBtn) {
+            playSound('click');
+
+            if (systemState === 'waiting_for_minus') {
+                if (clickedBtn === 'plus') return;
+                else {
+                    systemState = 'normal';
+                    plusClickCount = minusClickCount = 0;
+                    btnMinus.classList.remove('pulse-animation');
+                }
+            } 
+            else if (systemState === 'waiting_for_plus') {
+                if (clickedBtn === 'minus') return;
+                else {
+                    systemState = 'normal';
+                    plusClickCount = minusClickCount = 0;
+                    btnPlus.classList.remove('pulse-animation');
+                }
+            }
+
+            fanRotation += 60;
+            fanIcon.style.transform = `rotate(${fanRotation}deg)`;
+
+            let batteryRechargePerClick = Math.max(30, maxBatteryCapacity * 0.025);
+
+            if (currentEnergy >= energyCostPerClick) {
+                currentEnergy -= energyCostPerClick;
+                coins += 1;
+                currentHourMinedCoins += 1;
+                currentBatteryCharge = Math.min(currentBatteryCharge + batteryRechargePerClick, maxBatteryCapacity);
+
+                if (clickedBtn === 'plus') {
+                    plusClickCount++;
+                    minusClickCount = 0;
+                    if (plusClickCount > 4) {
+                        systemState = 'waiting_for_minus';
+                        btnMinus.classList.add('pulse-animation');
+                    }
+                } else {
+                    minusClickCount++;
+                    plusClickCount = 0;
+                    if (minusClickCount > 4) {
+                        systemState = 'waiting_for_plus';
+                        btnPlus.classList.add('pulse-animation');
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        const bindTapEvent = (element, type) => {
+            element.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(type); }, {passive: false});
+            element.addEventListener('mousedown', (e) => { e.preventDefault(); handleInteraction(type); });
+        };
+
+        bindTapEvent(btnPlus, 'plus');
+        bindTapEvent(btnMinus, 'minus');
+
+        setInterval(() => {
+            saveUserDataToCloud();
+        }, 10000);
+
+        window.addEventListener('load', () => {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tg = window.Telegram.WebApp;
+                    tg.expand();
+                    const user = tg.initDataUnsafe?.user;
+                    if (user && user.id) {
+                        currentTelegramId = user.id;
+                        const pName = document.getElementById('profileName');
+                        if(pName) pName.innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                        const pId = document.getElementById('profileId');
+                        if(pId) pId.innerText = "ID: " + user.id;
+                        const refInput = document.getElementById('refLinkInput');
+                        if(refInput) refInput.value = `https://t.me/Volt_Mining_bot?start=ref_${user.id}`;
+                    }
+                }
+            } catch(e) {}
+
+            loadUserDataFromCloud();
+        });
+    </script>
+
+    <div id="addTaskModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: #151a2f; border: 1px solid #3a477a; border-radius: 16px; padding: 20px; width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-weight: bold; font-size: 15px; color: #fbbd08; text-align: center;">إضافة مهمة جديدة</div>
+            
+            <div>
+                <label style="font-size: 11px; color: #8c93b7; display: block; margin-bottom: 3px;">عنوان المهمة:</label>
+                <input type="text" id="newTaskTitle" placeholder="مثال: اشترك في قناتنا" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #8c93b7; display: block; margin-bottom: 3px;">نوع المنصة:</label>
+                <select id="newTaskPlatform" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;">
+                    <option value="telegram">قناة / مجموعة تليجرام</option>
+                    <option value="youtube">فيديو يوتيوب</option>
+                    <option value="twitter">منصة X (تويتر)</option>
+                    <option value="other">رابط خارجي آخر</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #8c93b7; display: block; margin-bottom: 3px;">رابط المهمة (URL):</label>
+                <input type="text" id="newTaskUrl" placeholder="https://t.me/..." style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #8c93b7; display: block; margin-bottom: 3px;">تكلفة المهمة الإجمالية (عملات):</label>
+                <input type="number" id="newTaskCost" value="5000" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #8c93b7; display: block; margin-bottom: 3px;">عدد الأشخاص المطلوب تنفيذهم:</label>
+                <input type="number" id="newTaskMaxPeople" value="10" style="width: 100%; background: #0b0e17; border: 1px solid #283366; border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;" />
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                <button onclick="closeAddTaskModal()" style="flex: 1; background: #283366; border: none; border-radius: 8px; padding: 10px; color: #fff; font-weight: bold; cursor: pointer;">إلغاء</button>
+                <button onclick="saveNewTask()" style="flex: 1; background: #fbbd08; border: none; border-radius: 8px; padding: 10px; color: #0b0e17; font-weight: bold; cursor: pointer;">نشر المهمة</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
