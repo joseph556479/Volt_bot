@@ -46,7 +46,7 @@ bot.onText(/\/start/, async (msg) => {
         {
           telegram_id: telegramId,
           username: username,
-          coins: 10000000, // مطابق للرصيد الافتتاحي في اللعبة
+          coins: 500, // مطابق للرصيد الافتتاحي في اللعبة
           ads_watched: 0
         },
       ]);
