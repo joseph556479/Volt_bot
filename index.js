@@ -4,7 +4,7 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 // التوكن وإعدادات Supabase
-const BOT_TOKEN = '7629604169:AAGD_gXlZl2Ols9lWv9Nrm7K3s62T3eE8yA'; 
+const BOT_TOKEN = '8693411142:AAFuoPrae11gSiIitR9oD68hLkO1gmGSF-c'; 
 const SUPABASE_URL = 'https://biennfghsvreatzmldpt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_XtKpUAA1b1_QJEt_LfvJ_Q_7xvSmdeS'; 
 
